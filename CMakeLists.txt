@@ -1,9 +1,9 @@
 project(lib_tty_portmux)
 
-######################################################
+#######################################################################################
 #Generation of a Interface Header 
 #depending of the source list
-######################################################
+#######################################################################################
 FUNCTION(GENERATE_TTY_PORT_PLUGIN_IF _PLUGIN_SRC_LIST)
 
 	SET(PLUGIN_SRC_LIST ${_PLUGIN_SRC_LIST})
@@ -26,17 +26,17 @@ FUNCTION(GENERATE_TTY_PORT_PLUGIN_IF _PLUGIN_SRC_LIST)
 	configure_file(${PROJECT_SRC_DIR}/tty_port_plugin_init.h.in ${PROJECT_BINARY_DIR}/tty_port_plugin_init.h)
 ENDFUNCTION()
 
-######################################################
+#######################################################################################
 #Build Settings 
-######################################################
+#######################################################################################
 SET(PROJECT_SRC_DIR ${PROJECT_SOURCE_DIR}/src)
 SET(PROJECT_PLUGIN_DIR ${PROJECT_SOURCE_DIR}/plugins)
-SET(PROJECT_LINK_LIBRARIES itf_lib_convention )
+SET(PROJECT_LINK_LIBRARIES lib_convention )
 SET(SOURCES ${PROJECT_SRC_DIR}/lib_tty_portmux.c)
 
-######################################################
+#######################################################################################
 #Check envirionment setup environment variables
-######################################################
+#######################################################################################
 
 LIST(APPEND PROJECT_LINK_LIBRARIES lib_list lib_mini_printf)
 # if (TARGET os_basic)
@@ -45,9 +45,9 @@ LIST(APPEND PROJECT_LINK_LIBRARIES lib_list lib_mini_printf)
 # 	
 # endif()
 
-######################################################
+#######################################################################################
 #Check plugins to load
-######################################################
+#######################################################################################
 #List of available plugins
 SET(PROJECT_PLUGINS "unix" "syslog" "console" "trace_CORTEXM")
 if (UNIX)
@@ -69,9 +69,9 @@ endforeach(var list)
 GENERATE_TTY_PORT_PLUGIN_IF("${SOURCES_PLUGIN}")
 message(STATUS "${PROJECT_NAME} - LIST of ${SOURCES_PLUGIN}")
 
-######################################################
+#######################################################################################
 #Build target settings
-######################################################
+#######################################################################################
 add_library(${PROJECT_NAME} STATIC ${SOURCES} ${SOURCES_PLUGIN})
 target_link_libraries(${PROJECT_NAME} ${PROJECT_LINK_LIBRARIES})
 target_include_directories(${PROJECT_NAME} PUBLIC ./include)
