@@ -1,18 +1,26 @@
-/* ****************************************************************************************************
- * tty_port_unix.c within the following project: bld_device_cmake_Nucleo_STM32F401
- *	
- *  compiler:   GNU Tools ARM Embedded (4.7.201xqx)
- *  target:     Cortex Mx
- *  author:		thomas
- * ****************************************************************************************************/
-
-/* ****************************************************************************************************/
-
 /*
- *	******************************* change log *******************************
- *  date			user			comment
- * 	16.08.2018			thomas			- creation of tty_port_trace_CORTEXM.c
- *  
+ * This file is part of the EMBTOM project
+ * Copyright (c) 2018-2019 Thomas Willetal 
+ * (https://github.com/tom3333)
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining
+ * a copy of this software and associated documentation files (the
+ * "Software"), to deal in the Software without restriction, including
+ * without limitation the rights to use, copy, modify, merge, publish,
+ * distribute, sublicense, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so, subject to
+ * the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be
+ * included in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+ * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+ * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+ * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
 /* *******************************************************************
@@ -29,8 +37,8 @@
 #include <lib_convention__errno.h>
 
 /* project */
-#include <lib_tty_portmux_types.h>
-#include "tty_port_unix.h"
+#include <lib_ttyportmux_types.h>
+#include "tty_portunix.h"
 
 /* *******************************************************************
  * defines
@@ -44,23 +52,23 @@
 /* *******************************************************************
  * static function declarations
  * ******************************************************************/
-static int tty_port_syslog__open(tty_device_t *_tty_device);
-static int tty_port_syslog__close(tty_device_t *_tty_device);
-static int tty_port_syslog__write(tty_device_t *_tty_device, enum tty_stream _stream, const char * const _format, va_list _ap);
+static int tty_port_syslog__open(ttydevice_t *_ttydevice);
+static int tty_port_syslog__close(ttydevice_t *_ttydevice);
+static int tty_port_syslog__write(ttydevice_t *_ttydevice, enum ttyStreamType _streamType, const char * const _format, va_list _ap);
 
 /* *******************************************************************
  * (static) variables declarations
  * ******************************************************************/
-static tty_driver_t s_tty_port_syslog= {
-	.info.device_type_name = "TTY_DEVICE_syslog",
-	.info.device_type = TTY_DEVICE_syslog,
-	.info.device_number = 1,
+static ttydriver_t s_ttydriver_syslog= {
+	.info.deviceName = "TTYDEVICE_syslog",
+	.info.deviceType = TTYDEVICE_syslog,
+	.info.deviceNumber = 1,
 	.open = &tty_port_syslog__open,
 	.close = &tty_port_syslog__close,
 	.write = &tty_port_syslog__write,
 	.put_char =NULL,
 	.read = NULL,
-	.device = NULL
+	.ttydevice = NULL
 	};
 
 /* *******************************************************************
@@ -72,9 +80,9 @@ static tty_driver_t s_tty_port_syslog= {
  * ---------
  * \return	'0', if successful, < '0' if not successful
  * ******************************************************************/
-int tty_port_syslog__share_if(void)
+int tty_portsyslog__share_if(void)
 {
-	tty_port_register(&s_tty_port_syslog);
+	tty_driver_register(&s_ttydriver_syslog);
 	return EOK;
 }
 
@@ -83,9 +91,9 @@ int tty_port_syslog__share_if(void)
  * static function definition
  * ******************************************************************/
 
-static int tty_port_syslog__open(tty_device_t *_tty_device)
+static int tty_port_syslog__open(ttydevice_t *_ttydevice)
 {
-	if (_tty_device == NULL) {
+	if (_ttydevice == NULL) {
 		return -ESTD_INVAL;
 	}
 
@@ -101,43 +109,43 @@ static int tty_port_syslog__open(tty_device_t *_tty_device)
 	return EOK;
 }
 
-static int tty_port_syslog__close(tty_device_t *_tty_device)
+static int tty_port_syslog__close(ttydevice_t *_ttydevice)
 {
 	int ret_val;
 
-	if (_tty_device == NULL) {
+	if (_ttydevice == NULL) {
 		return -ESTD_INVAL;
 	}
 
 	return EOK;
 }
 
-static int tty_port_syslog__write(tty_device_t *_tty_device, enum tty_stream _stream, const char * const _format, va_list _ap)
+static int tty_port_syslog__write(ttydevice_t *_ttydevice, enum ttyStreamType _streamType, const char * const _format, va_list _ap)
 {
 	int ret_val;
 
-	if (_tty_device == NULL) {
+	if (_ttydevice == NULL) {
 		return -ESTD_INVAL;
 	}
 
-	switch (_stream) 
+	switch (_streamType) 
 	{
-		case TTY_STREAM_CONTROL:
+		case TTYSTREAM_control:
 			vsyslog(LOG_NOTICE, _format, _ap);
 			break;
-		case TTY_STREAM_debug:
+		case TTYSTREAM_debug:
 			vsyslog(LOG_DEBUG, _format, _ap);
 			break;
-		case TTY_STREAM_info:
+		case TTYSTREAM_info:
 			vsyslog(LOG_INFO, _format, _ap);
 			break;
-		case TTY_STREAM_warning:
+		case TTYSTREAM_warning:
 			vsyslog(LOG_WARNING, _format, _ap);
 			break;
-		case TTY_STREAM_error:
+		case TTYSTREAM_error:
 			vsyslog(LOG_ERR, _format, _ap);
 			break;
-		case TTY_STREAM_critical: 
+		case TTYSTREAM_critical: 
 			vsyslog(LOG_CRIT, _format, _ap);
 			break;
 		default:

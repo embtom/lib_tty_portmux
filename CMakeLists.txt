@@ -1,4 +1,4 @@
-project(lib_tty_portmux)
+project(lib_ttyportmux)
 
 #######################################################################################
 #Generation of a Interface Header 
@@ -13,7 +13,10 @@ FUNCTION(GENERATE_TTY_PORT_PLUGIN_IF _PLUGIN_SRC_LIST)
 	
 	#Write Header include
 	FOREACH(item ${PLUGIN_SRC_LIST})
-		STRING(REGEX MATCH "tty_port_[a-zA-Z0-9_]*." item ${item})
+		message(STATUS "+++ S${item}")
+		get_filename_component(item ${item} NAME)
+		STRING(REGEX MATCH "tty_port[a-zA-Z0-9_]*." item ${item})
+		message(STATUS "+++ S${item}")
   		IF(item)
     		STRING(APPEND GEN_HEADER_INCLUDES "#include <${item}h>\n")
     		STRING(APPEND GEN_IF_INIT_CALLS "\t${item}__share_if();\n") 		
@@ -23,7 +26,7 @@ FUNCTION(GENERATE_TTY_PORT_PLUGIN_IF _PLUGIN_SRC_LIST)
 	string (REPLACE "." "" GEN_IF_INIT_CALLS "${GEN_IF_INIT_CALLS}")
 	
 	#Write Config init file
-	configure_file(${PROJECT_SRC_DIR}/tty_port_plugin_init.h.in ${PROJECT_BINARY_DIR}/tty_port_plugin_init.h)
+	configure_file(${PROJECT_SRC_DIR}/tty_portplugin_init.h.in ${PROJECT_BINARY_DIR}/tty_portplugin_init.h)
 ENDFUNCTION()
 
 #######################################################################################
@@ -32,18 +35,13 @@ ENDFUNCTION()
 SET(PROJECT_SRC_DIR ${PROJECT_SOURCE_DIR}/src)
 SET(PROJECT_PLUGIN_DIR ${PROJECT_SOURCE_DIR}/plugins)
 SET(PROJECT_LINK_LIBRARIES lib_convention )
-SET(SOURCES ${PROJECT_SRC_DIR}/lib_tty_portmux.c)
+SET(SOURCES ${PROJECT_SRC_DIR}/lib_ttyportmux.c)
 
 #######################################################################################
 #Check envirionment setup environment variables
 #######################################################################################
 
 LIST(APPEND PROJECT_LINK_LIBRARIES lib_list lib_mini_printf)
-# if (TARGET os_basic)
-# 	LIST(APPEND PROJECT_LINK_LIBRARIES os_basic)	
-# else()
-# 	
-# endif()
 
 #######################################################################################
 #Check plugins to load
@@ -53,21 +51,25 @@ SET(PROJECT_PLUGINS "unix" "syslog" "console" "trace_CORTEXM")
 if (UNIX)
 	SET(PROJECT_DEFINES _GNU_SOURCE)
 	# At unix os add unix port
-	LIST(APPEND SOURCES_PLUGIN "${PROJECT_PLUGIN_DIR}/tty_port_unix.c")
-	LIST(APPEND SOURCES_PLUGIN "${PROJECT_PLUGIN_DIR}/tty_port_syslog.c")
+	LIST(APPEND SOURCES_PLUGIN "${PROJECT_PLUGIN_DIR}/tty_portunix.c")
+	LIST(APPEND SOURCES_PLUGIN "${PROJECT_PLUGIN_DIR}/tty_portsyslog.c")
 endif()
 
 #Only plugins are installed if the corresponding driver target exits
 foreach(var ${PROJECT_PLUGINS})
 	SET(PLUGIN_TARGET_NAME "lib_${var}")
 	if(TARGET ${PLUGIN_TARGET_NAME})
-		LIST(APPEND SOURCES_PLUGIN "${PROJECT_PLUGIN_DIR}/tty_port_${var}.c")
+		LIST(APPEND SOURCES_PLUGIN "${PROJECT_PLUGIN_DIR}/tty_port${var}.c")
 		LIST(APPEND PROJECT_LINK_LIBRARIES "${PLUGIN_TARGET_NAME}")	
 	endif()
-endforeach(var list)
+endforeach()
 
 GENERATE_TTY_PORT_PLUGIN_IF("${SOURCES_PLUGIN}")
-message(STATUS "${PROJECT_NAME} - LIST of ${SOURCES_PLUGIN}")
+
+foreach(ITEM ${SOURCES_PLUGIN})
+	get_filename_component(pluginName ${ITEM} NAME)
+	message(STATUS "${PROJECT_NAME} - Plugin ${pluginName}")
+endforeach()
 
 #######################################################################################
 #Build target settings
